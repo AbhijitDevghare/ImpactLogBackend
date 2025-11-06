@@ -4,8 +4,7 @@ class EngagementController {
   // Like a post
   static async likePost(req, res) {
     try {
-      // const userId = req.user.id; // from JWT
-      const userId="ee600e52-7efc-476c-8a5a-dea797ff495d"
+      const userId = req.user.id; // from JWT
 
       const { postId } = req.body;
 
@@ -34,6 +33,7 @@ class EngagementController {
   // Comment on post
   static async commentPost(req, res) {
     try {
+      console.log(req.body)
       const userId = req.user.id;
       const { postId, content } = req.body;
 
@@ -89,7 +89,7 @@ class EngagementController {
       const {postIds} = req.body;
 
       const counts = await EngagementService.getEngagementCountsByIdsFromDb(postIds);
-      console.log("count response : ",counts)
+      console.log("count re sponse : ",counts)
       res.json(counts)
     } catch (error) {
       console.log(error)

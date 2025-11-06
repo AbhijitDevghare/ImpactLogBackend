@@ -10,7 +10,7 @@ const jwtAuth = (req, res, next) => {
     }
 
     try {
-        const SECRET = "SECRETKEYOFLOGINABHIDEV04snbkdnfejbgiewngeriiornklernkbiuhioknkjiuho";
+        const SECRET = process.env.JWT_SECRET;
         // Verify JWT token
         const payload = JWT.verify(token,SECRET);
 

@@ -1,6 +1,6 @@
 const RegistrationService = require('../services/registrationService');
 
-class RegistrationController {
+class   RegistrationController {
   
   
 
@@ -16,20 +16,23 @@ class RegistrationController {
       res.status(400).json({ message: err.message });
     }
   }
+  
 
   static async getUserRegistrations(req, res) {
-    try {
-      let { userId } = req.params;
-      if(!userId) userId = req.user.id;
-      const registrations = await RegistrationService.getUserRegistrations(userId);
-      res.json(registrations);
-    } catch (err) {
-      res.status(400).json({ message: err.message });
-    }
+  try {
+    let { userId } = req.params;
+    if (!userId && req.user) userId = req.user.id;
+    const registrations = await RegistrationService.getUserRegistrations(userId);
+    return res.json(registrations);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
   }
+}
+
 
   static async getEventRegistrations(req, res) {
     try {
+      // console.log(req.params)
       const { eventId } = req.params;
       const registrations = await RegistrationService.getEventRegistrations(eventId);
       res.json(registrations);

@@ -34,12 +34,12 @@ static async giveRewardsToUsersInDb(event_id, selectedUsers, points, badge_id,ba
     );
 
     // 5️⃣ If successful, update event status
-    // if (rewardResponse?.status === 200 || rewardResponse?.data) {
-    //   await Event.update(
-    //     { status: "rewarded" },
-    //     { where: { id: event_id } }
-    //   );
-    // }
+    if (rewardResponse?.status === 200 || rewardResponse?.data) {
+      await Event.update(
+        { status: "rewarded" },
+        { where: { id: event_id } }
+      );
+    }
 
     // 6️⃣ Return combined result
     return {
@@ -82,12 +82,14 @@ static async getPastEventsFromDb(userId) {
   return events;
 }
   
+
 static async getPublishedEventsFromDbByUserID(userId) {
   const events = await Event.findAll({
     where: {
       organization_id: userId,
       status: "published",
     },
+    order: [["scheduled_date", "ASC"]], // upcoming events first
   });
   return events;
 }
@@ -146,10 +148,10 @@ static async publishEventInDb(event_id) {
       // create qr code for verification 
 
      
-
+      console.log("CCREATING THE EVENTS ")
       const event = await Event.create(eventData);
 
-      const qrcreation = await axios.post(
+      const qrcreation =  axios.post(
         "http://localhost:3008/verify/qr-generate",
         {eventId:event.id},
         { withCredentials: true }
@@ -157,7 +159,8 @@ static async publishEventInDb(event_id) {
 
       return event;
     } catch (err) {
-      throw new AppError(err.message || "Failed to create event", 400);
+      console.log(err)
+      throw new AppError(err);
     }
   }
 

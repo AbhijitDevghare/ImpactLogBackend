@@ -31,20 +31,18 @@ const generateQR = async (req, res) => {
 
 const getQr = async (req, res) => {
   try {
-    console.log(req.body)
-    // const { eventId } = req.body;
-    const eventId ="123456"
+    const { eventId } = req.body;
     if (!eventId) {
       return res.status(400).json({ error: "Event ID is required" });
     }
-    
-    
 
-    const verificationToken = await VerificationToken.findOne({ eventId });
-        console.log(verificationToken)
+    let verificationToken = await VerificationToken.findOne({ eventId });
 
     if (!verificationToken) {
-      return res.status(404).json({ error: "No verification token found for this event" });
+      const token = uuidv4();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      verificationToken = new VerificationToken({ eventId, token, expiresAt });
+      await verificationToken.save();
     }
 
     const qrData = JSON.stringify({ eventId, token: verificationToken.token });
@@ -58,11 +56,13 @@ const getQr = async (req, res) => {
 };
 
 
+
 // Check-in
 const checkin = async (req, res) => {
   try {
-    const { userId, token } = req.body;
-    const eventId = "123456"; // temporary hardcoded
+    console.log(req.body)
+    const { userId, token ,eventId} = req.body;
+    // const eventId = "123456"; // temporary hardcoded
 
     if (!userId || !eventId || !token)
       return res.status(400).json({ error: "Missing fields" });
@@ -86,7 +86,7 @@ const checkin = async (req, res) => {
 
     res.json({ message: "Verification successful" });
   } catch (err) {
-    console.error(err);
+    console.error(err.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

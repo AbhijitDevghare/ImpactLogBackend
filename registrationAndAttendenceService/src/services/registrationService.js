@@ -68,7 +68,7 @@ class RegistrationService {
   const registrations = await Registration.findAll({
     where: { 
       userId,
-      status: "registered"
+      // status: "registered"
     }
   });
 
@@ -147,6 +147,48 @@ class RegistrationService {
 
     return attendance;
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          static async getEventsByRegistrationIds(registrationIds) {
+          if (!registrationIds || registrationIds.length === 0) return [];
+
+          // Find registrations by IDs
+          const registrations = await Registration.findAll({
+            where: { id: registrationIds, status: "registered" }
+          });
+
+          const eventIds = registrations.map(reg => reg.eventId);
+          let events = [];
+
+          if (eventIds.length > 0) {
+            const response = await axios.get('http://localhost:3005/events/getEventsByIds', {
+              params: { ids: eventIds }
+            });
+            events = response.data;
+          }
+
+          // Combine event data with registration info
+          const combined = registrations.map(reg => {
+            const event = events.find(e => e.id === reg.eventId);
+            return { ...reg.toJSON(), event };
+          });
+
+          return combined;
+        }
+
 }
 
 module.exports = RegistrationService;

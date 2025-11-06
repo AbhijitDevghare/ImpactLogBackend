@@ -36,9 +36,11 @@ app.use(helmet({
 app.set('trust proxy', 1);
 
 
-// Routes will be mounted in server.js
-const routes = require("./routes/v1/registrationRoutes");
-app.use("/register",routes) 
+const registrationsRoutes = require("./routes/v1/registrationRoutes");
+app.use("/register",registrationsRoutes) 
+
+const attendanceRoutes = require("./routes/v1/attendanceRoutes")
+app.use("/attendence",attendanceRoutes) 
 
 const errorMiddleware = require('./middleware/error.middleware');
 app.use(errorMiddleware)

@@ -8,7 +8,7 @@ const router = express.Router();
 // -------------------- EVENT ROUTES --------------------
 
 // Create event with multiple media files
-router.post("/", uploads.array("media"), EventController.createEvent);
+router.post("/", jwtAuth,uploads.array("media"), EventController.createEvent);
 router.post("/publish/:event_id", jwtAuth, EventController.publishEvent);
 
 router.put("/:event_id/:status", jwtAuth, EventController.changeEventStatus);

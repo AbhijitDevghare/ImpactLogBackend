@@ -106,7 +106,7 @@ class EngagementService {
   }
 
 
-static async getEngagementCountsByIdsFromDb(postIds) {
+  static async getEngagementCountsByIdsFromDb(postIds) {
   const redis = getRedisClient();
   const results = {};
 
@@ -134,31 +134,35 @@ static async getEngagementCountsByIdsFromDb(postIds) {
         shares: safe(base + 2),
       };
     }
+  }
 
-    // Fallback to DB if Redis empty
-    for (const postId of postIds) {
-      const data = results[postId];
-      if (!data.likes.length && !data.comments.length && !data.shares.length) {
-        const [likes, comments, shares] = await Promise.all([
-          Like.findAll({ where: { postId }, attributes: ["userId"] }),
-          Comment.findAll({ where: { postId }, attributes: ["userId"] }),
-          Share.findAll({ where: { postId }, attributes: ["userId"] }),
-        ]);
-        results[postId] = {
-          likes: likes.map((l) => l.userId),
-          comments: comments.map((c) => c.userId),
-          shares: shares.map((s) => s.userId),
-        };
-      }
+  // Fallback to DB if Redis empty
+  for (const postId of postIds) {
+    const data = results[postId];
+    if (!data.likes.length && !data.comments.length && !data.shares.length) {
+      const [likes, comments, shares] = await Promise.all([
+        Like.findAll({ where: { postId }, attributes: ["userId"] }),
+        Comment.findAll({ where: { postId }, attributes: ["userId", "content", "createdAt"] }),
+        Share.findAll({ where: { postId }, attributes: ["userId"] }),
+      ]);
+
+      results[postId] = {
+        likes: likes.map((l) => l.userId),
+        comments: comments.map((c) => ({
+          userId: c.userId,
+          content: c.content,
+          createdAt: c.createdAt,
+        })),
+        shares: shares.map((s) => s.userId),
+      };
     }
   }
 
-  // Gather all userIds across posts
+  // Gather all unique userIds across posts
   const uniqueUserIds = new Set();
   Object.values(results).forEach((data) => {
-    [...data.likes, ...data.comments, ...data.shares].forEach((id) =>
-      uniqueUserIds.add(id)
-    );
+    [...data.likes, ...data.shares].forEach((id) => uniqueUserIds.add(id));
+    data.comments.forEach((c) => uniqueUserIds.add(c.userId));
   });
 
   // Cache check
@@ -170,7 +174,7 @@ static async getEngagementCountsByIdsFromDb(postIds) {
     else missingUserIds.push(id);
   });
 
-  // 🔥 Fetch missing users (array response)
+  // Fetch missing users from user service
   let fetchedUsersArray = [];
   if (missingUserIds.length) {
     try {
@@ -179,7 +183,6 @@ static async getEngagementCountsByIdsFromDb(postIds) {
         { userIds: missingUserIds }
       );
       fetchedUsersArray = res.data.users || [];
-      console.log("User service response:", fetchedUsersArray);
 
       // Convert array → object keyed by id
       fetchedUsersArray.forEach((user) => {
@@ -197,18 +200,25 @@ static async getEngagementCountsByIdsFromDb(postIds) {
 
   // Attach user details to each engagement entry
   for (const [postId, data] of Object.entries(results)) {
-    const enrich = (ids) =>
-      ids.map((id) => allUsers[id] || { id, name: "Unknown User" });
+    const enrichLikesOrShares = (ids) => ids.map((id) => allUsers[id] || { id, name: "Unknown User" });
+
+    const enrichComments = (comments) =>
+      comments.map((c) => ({
+        user: allUsers[c.userId] || { id: c.userId, name: "Unknown User" },
+        content: c.content,
+        createdAt: c.createdAt,
+      }));
 
     results[postId] = {
-      likes: enrich(data.likes),
-      comments: enrich(data.comments),
-      shares: enrich(data.shares),
+      likes: enrichLikesOrShares(data.likes),
+      comments: enrichComments(data.comments),
+      shares: enrichLikesOrShares(data.shares),
     };
   }
 
   return results;
 }
+
 
 }
 module.exports = EngagementService;

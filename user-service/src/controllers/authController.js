@@ -7,8 +7,6 @@ const UserLoginDTO = require('../dto/UserLoginDto');
 
 async function signup(req, res, next) {
   try {
-    console.log("REQUEST FOR SIGNUP:", req.body);  // ✅ fixed
-
     const dto = new UserSignupDTO(req.body);
     console.log(dto);
     const errors = dto.validate();

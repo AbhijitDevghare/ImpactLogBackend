@@ -5,7 +5,7 @@ const jwtAuth = require('../../middleware/jwtAuth');
 const FollowController = require('../../controllers/followController');
 
 // User related endpoints (protected)
-router.get('/profile', userController.getProfile);
+router.get('/profile',jwtAuth, userController.getProfile);
 router.put('/profile', jwtAuth, userController.updateProfile);
 router.get("/communities",userController.getCommunities)
 router.get('/profile/:userId',userController.getProfileById)

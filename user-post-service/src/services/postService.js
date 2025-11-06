@@ -82,7 +82,7 @@ async function getLatestPosts(userId) {
   if (!posts.length) {
     posts = await Post.findAll({
       order: [["createdAt", "DESC"]],
-      limit: 10,
+      limit: 20,
     });
   }
 
@@ -106,6 +106,8 @@ async function getLatestPosts(userId) {
     "http://localhost:4200/counts",
     { postIds }
   );
+const tempResult = JSON.stringify(engagementResponse.data);
+console.log(tempResult);
 
   const engagementData = engagementResponse.data || {}; // structure like { postId: {likes, comments, shares, users...} }
 

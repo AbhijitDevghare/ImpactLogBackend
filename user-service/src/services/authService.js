@@ -13,9 +13,7 @@ const crypto = require('crypto');
 const { Op } = require('sequelize');
 
 async function signup(dto,file) {
-    console.log("SIGNUP LAYER")
 
-  // Check if user already exists
   const existing = await User.findOne({ where: { email: dto.email } });
   if (existing) {
     throw new AppError('User already exists with this email', 400);

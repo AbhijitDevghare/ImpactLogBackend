@@ -116,8 +116,9 @@ static async getPublishedEvents(req, res, next) {
 
   static async createEvent(req, res, next) {
     try {
+      console.log(req.body)
       const dto = EventDto.fromRequest(req.body).toPersistence();
-      const organizationId = req.user?.organization_id || req.body.organization_id;
+      const organizationId = req.user?.id || req.body.organization_id;
 
 
       if (!organizationId) throw new AppError("organization_id is required", 400);

@@ -66,10 +66,8 @@ async function getUsersByUserIds(req,res,next) {
 
 async function getProfile(req, res, next) {
   try {
-    // const userId = req.user.id; // from authMiddleware
-    const userId="ee600e52-7efc-476c-8a5a-dea797ff495d";
+    const userId = req.user.id; 
     const user = await userService.getUserById(userId);
-
 
     if (!user) {
       return next(new AppError('User not found', 404));

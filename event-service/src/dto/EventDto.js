@@ -4,22 +4,20 @@ class EventDto {
   constructor(data = {}) {
     this.event_name = EventDto.#toString(data.event_name);
     this.description = EventDto.#toString(data.description);
-
     this.location = EventDto.#toLocation(data.location);
 
     this.scheduled_date = EventDto.#toDateOnly(data.scheduled_date);
-    this.start_time = EventDto.#toDate(data.start_time);
-    this.end_time = EventDto.#toDate(data.end_time);
+    this.start_time = EventDto.#toTime(data.start_time);
+    this.end_time = EventDto.#toTime(data.end_time);
 
     this.capacity = EventDto.#toInt(data.capacity);
     this.tags = EventDto.#toStringArray(data.tags);
-    this.status = EventDto.#toEnum(data.status, ["draft", "published", "cancelled"], "draft");
+    this.status = EventDto.#toEnum(data.status, ["draft", "published", "cancelled", "completed", "rewarded"], "draft");
 
     this.points = EventDto.#toInt(data.points) ?? 0;
     this.badge_id = EventDto.#toUUID(data.badge_id);
   }
 
-  // Convert request body into DTO with validation
   static fromRequest(body = {}, options = { partial: false }) {
     const dto = new EventDto(body);
 
@@ -34,7 +32,6 @@ class EventDto {
     return dto;
   }
 
-  // For update operations
   static toUpdatePayload(body = {}) {
     const dto = new EventDto(body);
     const out = {};
@@ -59,7 +56,6 @@ class EventDto {
     return out;
   }
 
-  // For persistence into DB
   toPersistence() {
     return {
       event_name: this.event_name,
@@ -73,7 +69,6 @@ class EventDto {
       status: this.status,
       points: this.points,
       badge_id: this.badge_id,
-      // media handled separately in service
     };
   }
 
@@ -84,17 +79,23 @@ class EventDto {
     return s.length ? s : null;
   }
 
-  static #toDate(v) {
+  static #toTime(v) {
     if (!v) return null;
-    const d = new Date(v);
-    return isNaN(d.getTime()) ? null : d;
+    if (typeof v === "string") {
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/;
+      return timeRegex.test(v.trim()) ? v.trim() : null;
+    }
+    if (v instanceof Date) {
+      return v.toTimeString().split(" ")[0]; // HH:mm:ss
+    }
+    return null;
   }
 
   static #toDateOnly(v) {
     if (!v) return null;
     const d = new Date(v);
     if (isNaN(d.getTime())) return null;
-    return d.toISOString().split("T")[0]; // YYYY-MM-DD
+    return d.toISOString().split("T")[0];
   }
 
   static #toInt(v) {
@@ -122,8 +123,7 @@ class EventDto {
 
   static #toUUID(v) {
     if (!v) return null;
-    const regex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return regex.test(v) ? v : null;
   }
 
@@ -136,12 +136,7 @@ class EventDto {
         return null;
       }
     }
-    if (
-      typeof v === "object" &&
-      "lat" in v &&
-      "long" in v &&
-      "address" in v
-    ) {
+    if (typeof v === "object" && "lat" in v && "long" in v && "address" in v) {
       return v;
     }
     return null;
